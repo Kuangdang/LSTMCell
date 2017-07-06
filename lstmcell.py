@@ -26,7 +26,8 @@ class LSTMCell(RNNCell):
     def __call__(self, inputs, state, scope=None):
             c, h = state
             dtype = inputs.dtype
-            input_size = inputs.get_shape()[0]
+            input_size = inputs.get_shape()[1]
+            batch_size = inputs.get_shape()[0]
 
             #block input
             Wz = tf.get_variable("Wz", [input_size, self._num_units], dtype=dtype)
@@ -37,14 +38,16 @@ class LSTMCell(RNNCell):
             #input gate
             Wi = tf.get_variable("Wi", [input_size, self._num_units], dtype=dtype)
             Ri = tf.get_variable("Ri", [self._num_units, self._num_units], dtype=dtype)
+            Pi = tf.get_variable("Pi", [batch_size, self._num_units], dtype=dtype)
             bi = tf.get_variable("bi", [1,  self._num_units], dtype=dtype)
-            input_gate = tf.sigmoid(tf.matmul(inputs, Wi) + tf.matmul(h, Ri) + bi)
+            input_gate = tf.sigmoid(tf.matmul(inputs, Wi) + tf.matmul(h, Ri) + Pi*c + bi)
             
             #forget gate
             Wf = tf.get_variable("Wf", [input_size, self._num_units], dtype=dtype)
             Rf = tf.get_variable("Rf", [self._num_units, self._num_units], dtype=dtype)
+            Pf = tf.get_variable("Pf", [batch_size, self._num_units], dtype=dtype)
             bf = tf.get_variable("bf", [1,  self._num_units], dtype=dtype)
-            forget_gate = tf.sigmoid(tf.matmul(inputs, Wf) + tf.matmul(h, Rf) + bf)
+            forget_gate = tf.sigmoid(tf.matmul(inputs, Wf) + tf.matmul(h, Rf) + Pf*c + bf)
             
             #cell state
             new_c = c * forget_gate + z * input_gate
@@ -52,8 +55,9 @@ class LSTMCell(RNNCell):
             #output gate
             Wo = tf.get_variable("Wo", [input_size, self._num_units], dtype=dtype)
             Ro = tf.get_variable("Ro", [self._num_units, self._num_units], dtype=dtype)
+            Po = tf.get_variable("Po", [batch_size, self._num_units], dtype=dtype)
             bo = tf.get_variable("bo", [1,  self._num_units], dtype=dtype)
-            output_gate = tf.sigmoid(tf.matmul(inputs, Wo) + tf.matmul(h, Ro) + bo)
+            output_gate = tf.sigmoid(tf.matmul(inputs, Wo) + tf.matmul(h, Ro) + Po*c + bo)
             
             #block output
             new_h = output_gate * self._activation(new_c)
