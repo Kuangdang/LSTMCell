@@ -26,7 +26,7 @@ class LSTMCell(RNNCell):
     def __call__(self, inputs, state, scope=None):
             c, h = state
             dtype = inputs.dtype
-            input_size = inputs.get_shape()[1]
+            input_size = inputs.get_shape()[0]
 
             #block input
             Wz = tf.get_variable("Wz", [input_size, self._num_units], dtype=dtype)
